@@ -21,7 +21,8 @@ A 2D, top-down, real-time naval strategy game for desktop platforms.
 
 ## 4. Technical Specifications
 
-- **Platform:** Standalone local desktop application (target builds for Windows, macOS, Linux).
-- **Game Engine:** **Godot Engine**.
-- **Primary Language:** **GDScript** (the native, Python-like language for Godot).
-- **Development IDE:** **Visual Studio Code** with the official **godot-tools** extension to allow for external editing and use of AI code assistants.
+- **Platform:** Browser-based application, running locally.
+- **Game Framework:** **Phaser.js**.
+- **Language:** **TypeScript**.
+- **Build Tool & Dev Server:** **Vite**.
+- **Development IDE:** **Visual Studio Code** (or any preferred editor).
