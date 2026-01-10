@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { EnemyShip } from '../objects/EnemyShip';
 
 interface ShipData {
     name: string;
@@ -21,6 +22,7 @@ export class GameScene extends Phaser.Scene {
     // Ship data
     private shipData: Map<Phaser.Physics.Arcade.Sprite, ShipData> = new Map();
     private ships: Phaser.Physics.Arcade.Sprite[] = [];
+    private enemyShips: EnemyShip[] = [];
 
     // Flag to prevent background click when clicking on ship
     // private justClickedShip: boolean = false; // This is removed
@@ -77,6 +79,16 @@ export class GameScene extends Phaser.Scene {
             currentLife: 1800
         });
 
+        const enemyShip = new EnemyShip(this, this.playableWidth - 50, this.scale.height - 50);
+        this.enemyShips.push(enemyShip);
+
+        this.shipData.set(enemyShip, {
+            name: enemyShip.shipName,
+            maxLife: enemyShip.life,
+            currentLife: enemyShip.life
+        });
+
+
         // Enable world bounds events
         const body = ship.body as Phaser.Physics.Arcade.Body;
         body.onWorldBounds = true;
@@ -100,6 +112,12 @@ export class GameScene extends Phaser.Scene {
             }
         });
 
+        enemyShip.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            if (pointer.button === 0) {
+                this.selectShip(enemyShip);
+            }
+        });
+
         // Event: Click on the background to move or deselect the ship
         let bgHandlerCallCount = 0;
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -117,12 +135,18 @@ export class GameScene extends Phaser.Scene {
                 return;
             }
 
+            const clickWasOnEnemyShip = this.enemyShips.some(s => s.getBounds().contains(pointer.worldX, pointer.worldY));
+            if (clickWasOnEnemyShip) {
+                console.log('🟨 Click was on an enemy ship, ignoring in background handler.');
+                return;
+            }
+
             console.log('🟨 Processing background click (was not on a ship)');
 
             // Check if click is in playable area or sidebar
             if (pointer.x < this.playableWidth) {
                 // Click in playable area
-                if (this.selectedShip) {
+                if (this.selectedShip && !this.enemyShips.includes(this.selectedShip as EnemyShip)) {
                     // Store the destination
                     this.destination.set(pointer.worldX, pointer.worldY);
                     console.log('🟨 ✅ MOVING SHIP TO:', pointer.worldX, pointer.worldY);
@@ -178,6 +202,8 @@ export class GameScene extends Phaser.Scene {
                 }
             }
         }
+
+        this.enemyShips.forEach(enemy => enemy.update());
     }
 
     // --- Helper Functions ---
@@ -187,7 +213,11 @@ export class GameScene extends Phaser.Scene {
         // If there's already a selected ship, deselect it first
         if (this.selectedShip) {
             console.log('Clearing tint from previous ship');
-            this.selectedShip.setTint(0x0000ff); // Back to blue
+            if (this.enemyShips.includes(this.selectedShip as EnemyShip)) {
+                this.selectedShip.clearTint();
+            } else {
+                this.selectedShip.setTint(0x0000ff); // Back to blue
+            }
         }
 
         // Select the new ship and apply a tint to show it's selected
@@ -202,7 +232,11 @@ export class GameScene extends Phaser.Scene {
     private deselectShip() {
         if (this.selectedShip) {
             console.log('Deselecting ship');
-            this.selectedShip.setTint(0x0000ff); // Back to blue
+            if (this.enemyShips.includes(this.selectedShip as EnemyShip)) {
+                this.selectedShip.clearTint();
+            } else {
+                this.selectedShip.setTint(0x0000ff); // Back to blue
+            }
             this.selectedShip = null;
             this.hideStatsDisplay();
         }
