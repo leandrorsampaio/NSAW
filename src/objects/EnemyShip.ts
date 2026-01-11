@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 export class EnemyShip extends Phaser.Physics.Arcade.Sprite {
     public life: number = 4000;
     public shipName: string = 'USS Constellation';
+    public isDead: boolean = false;
+    private tween: Phaser.Tweens.Tween | null = null;
 
     constructor(scene: Phaser.Scene, x: number, y: number, playableWidth: number, gameHeight: number) {
         super(scene, x, y, 'enemy_ship');
@@ -33,7 +35,7 @@ export class EnemyShip extends Phaser.Physics.Arcade.Sprite {
         path.lineTo(this.x, this.y);
 
         const follower = { t: 0, vec: new Phaser.Math.Vector2() };
-        this.scene.tweens.add({
+        this.tween = this.scene.tweens.add({
             targets: follower,
             t: 1,
             ease: 'Linear',
@@ -43,6 +45,10 @@ export class EnemyShip extends Phaser.Physics.Arcade.Sprite {
         });
 
         this.scene.events.on('update', () => {
+            if (this.isDead) {
+                this.tween?.stop();
+                return;
+            }
             path.getPoint(follower.t, follower.vec);
             this.setPosition(follower.vec.x, follower.vec.y);
         });
